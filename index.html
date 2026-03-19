@@ -33,7 +33,6 @@
             user-select: none;
         }
 
-        /* Responsive Container */
         .player-wrapper {
             width: 100%;
             height: 100%;
@@ -48,8 +47,6 @@
             position: relative;
             width: 100%;
             height: 100%;
-            max-width: 100%;
-            max-height: 100%;
             background: #000;
             display: flex;
             justify-content: center;
@@ -57,7 +54,6 @@
             overflow: hidden;
         }
 
-        /* Responsive Aspect Ratio Logic for Laptop/iPad/Mobile */
         @media (min-aspect-ratio: 16/9) {
             video { width: auto; height: 100%; }
         }
@@ -71,11 +67,9 @@
             transition: filter 0.3s ease;
         }
 
-        /* Quality Filters (Fake quality) */
         video[data-quality="480"] { filter: blur(2px) contrast(0.8); }
         video[data-quality="720"] { filter: blur(0.7px); }
 
-        /* HUD - Hide everything when inactive */
         .hud {
             position: absolute;
             inset: 0;
@@ -88,36 +82,16 @@
             justify-content: space-between;
         }
 
-        /* Show HUD on hover/active */
         .video-container.active .hud {
             opacity: 1;
         }
 
-        .spinner-wrapper {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-        }
-        .spinner {
-            width: 60px; height: 60px;
-            border: 4px solid rgba(255,255,255,0.1);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .hidden { display: none !important; }
-
-        /* Full-Width Progress Scrubber */
         .progress-container {
             position: absolute;
             bottom: 80px;
             left: 24px;
             right: 24px;
-            height: 30px; /* Larger hit area */
+            height: 30px;
             display: flex;
             align-items: center;
             cursor: pointer;
@@ -155,7 +129,6 @@
         }
         .progress-container:hover .progress-knob { transform: translateY(-50%) scale(1); }
 
-        /* Main Controls Bar */
         .controls-bar {
             width: 100%;
             padding: 0 24px 24px;
@@ -176,7 +149,6 @@
 
         .time-display { font-size: 14px; font-variant-numeric: tabular-nums; color: #ccc; letter-spacing: 0.5px; }
 
-        /* Quality Dropdown */
         .quality-wrapper { position: relative; }
         .quality-menu {
             position: absolute; bottom: 50px; right: 0;
@@ -192,7 +164,6 @@
         .quality-menu div:hover { background: rgba(255,255,255,0.1); color: #fff; }
         .quality-menu div.active { color: var(--primary); font-weight: bold; }
 
-        /* Tap Regions for Mobile Double Tap */
         .tap-regions {
             position: absolute; inset: 0;
             display: flex; z-index: 15;
@@ -200,7 +171,6 @@
         }
         .tap-left, .tap-right { width: 50%; height: 100%; }
 
-        /* Central Feedback Animation */
         .center-anim {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 100px; height: 100px; background: rgba(0,0,0,0.4);
@@ -213,7 +183,6 @@
             100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
         }
 
-        /* Skip Visuals */
         .skip-hint {
             position: absolute; top: 50%; transform: translateY(-50%);
             display: flex; flex-direction: column; align-items: center;
@@ -229,35 +198,26 @@
         }
         .skip-text { font-weight: 800; font-size: 24px; margin-top: 8px; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
 
-        /* Responsive Fixes */
         @media (max-width: 600px) {
             .progress-container { left: 16px; right: 16px; bottom: 70px; }
             .controls-bar { padding: 0 16px 16px; }
             svg { width: 24px; height: 24px; }
             .time-display { font-size: 12px; }
         }
-
+        .hidden { display: none !important; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div class="player-wrapper">
         <div class="video-container" id="container">
-            <!-- Main Video -->
-            <video id="player" playsinline autoplay preload="auto" disablePictureInPicture data-quality="1080">
-                <!-- 100% protection is not possible on frontend -->
-            </video>
+            <video id="player" playsinline autoplay preload="auto" disablePictureInPicture data-quality="1080"></video>
 
-            <!-- Loading Spinner -->
-            <div class="spinner-wrapper" id="spinner"><div class="spinner"></div></div>
-
-            <!-- Double Tap Visuals -->
             <div class="tap-regions">
                 <div class="tap-left" id="tapLeft"></div>
                 <div class="tap-right" id="tapRight"></div>
             </div>
 
-            <!-- Feedback Overlays -->
             <div class="center-anim" id="centerAnim"><svg viewBox="0 0 24 24" id="centerIcon"></svg></div>
             
             <div class="skip-hint skip-left" id="hintLeft">
@@ -270,12 +230,9 @@
                 <div class="skip-text">10s</div>
             </div>
 
-            <!-- HUD (Controls) Area -->
             <div class="hud">
-                <div class="top-bar"></div> <!-- Empty top spacer -->
-
+                <div class="top-bar"></div>
                 <div class="bottom-area">
-                    <!-- Progress Section -->
                     <div class="progress-container" id="scrubber">
                         <div class="progress-rail">
                             <div class="progress-fill" id="fill">
@@ -284,7 +241,6 @@
                         </div>
                     </div>
 
-                    <!-- Controls Section -->
                     <div class="controls-bar">
                         <div class="controls-left">
                             <button id="playBtn"><svg viewBox="0 0 24 24" id="playIcon"></svg></button>
@@ -301,7 +257,6 @@
                                     <div data-q="480">480p</div>
                                 </div>
                             </div>
-                            <!-- Maximize / Fullscreen -->
                             <button id="fullBtn"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
                         </div>
                     </div>
@@ -319,7 +274,6 @@
         const currTime = document.getElementById('currTime');
         const durTime = document.getElementById('durTime');
         const scrubber = document.getElementById('scrubber');
-        const spinner = document.getElementById('spinner');
 
         v.src = 'https://pub-82f7b19554224f9eae95dca653d9228e.r2.dev/output.mp4';
 
@@ -329,11 +283,9 @@
             unmute: 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'
         };
 
-        // Initialize HUD
         playIcon.innerHTML = `<path d="${ICONS.play}"/>`;
         document.getElementById('muteIcon').innerHTML = `<path d="${ICONS.unmute}"/>`;
 
-        // Auto-Hide Control System
         let idleTimer;
         function resetHUD() {
             c.classList.add('active');
@@ -345,7 +297,6 @@
             window.addEventListener(evt, resetHUD);
         });
 
-        // Basic Play/Pause
         function togglePlay() {
             if (v.paused) { v.play(); playIcon.innerHTML = `<path d="${ICONS.pause}"/>`; }
             else { v.pause(); playIcon.innerHTML = `<path d="${ICONS.play}"/>`; }
@@ -359,7 +310,6 @@
             anim.classList.remove('active'); void anim.offsetWidth; anim.classList.add('active');
         }
 
-        // Seeking via Scrubber
         function updateScrub(e) {
             const rect = scrubber.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -367,38 +317,29 @@
             v.currentTime = pct * v.duration;
         }
 
-        scrubber.addEventListener('mousedown', (e) => {
-            isScrubbing = true;
-            updateScrub(e);
-        });
+        scrubber.addEventListener('mousedown', (e) => { isScrubbing = true; updateScrub(e); });
         window.addEventListener('mousemove', (e) => { if (isScrubbing) updateScrub(e); });
         window.addEventListener('mouseup', () => isScrubbing = false);
         scrubber.addEventListener('touchstart', (e) => { isScrubbing = true; updateScrub(e); }, {passive:false});
         window.addEventListener('touchmove', (e) => { if (isScrubbing) updateScrub(e); }, {passive:false});
         window.addEventListener('touchend', () => isScrubbing = false);
-
         let isScrubbing = false;
 
-        // Double Tap System
         let tapCountL = 0, tapCountR = 0, tapTimerL, tapTimerR;
-        
         document.getElementById('tapLeft').addEventListener('click', (e) => {
             tapCountL++;
             clearTimeout(tapTimerL);
             if (tapCountL === 2) {
-                skip(-10, 'hintLeft');
-                tapCountL = 0;
+                skip(-10, 'hintLeft'); tapCountL = 0;
             } else {
                 tapTimerL = setTimeout(() => { if (tapCountL === 1) togglePlay(); tapCountL = 0; }, 300);
             }
         });
-
         document.getElementById('tapRight').addEventListener('click', (e) => {
             tapCountR++;
             clearTimeout(tapTimerR);
             if (tapCountR === 2) {
-                skip(10, 'hintRight');
-                tapCountR = 0;
+                skip(10, 'hintRight'); tapCountR = 0;
             } else {
                 tapTimerR = setTimeout(() => { if (tapCountR === 1) togglePlay(); tapCountR = 0; }, 300);
             }
@@ -411,21 +352,18 @@
             resetHUD();
         }
 
-        // Time Updates
         v.addEventListener('timeupdate', () => {
             const pct = (v.currentTime / v.duration) * 100;
             fill.style.width = `${pct}%`;
             currTime.innerText = format(v.currentTime);
         });
         v.addEventListener('loadedmetadata', () => durTime.innerText = format(v.duration));
-
         function format(t) {
             if (isNaN(t)) return "00:00";
             let m = Math.floor(t / 60), s = Math.floor(t % 60);
             return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        // Mute & Quality
         document.getElementById('muteBtn').addEventListener('click', () => {
             v.muted = !v.muted;
             document.getElementById('muteIcon').innerHTML = `<path d="${v.muted ? ICONS.mute : ICONS.unmute}"/>`;
@@ -443,33 +381,16 @@
             });
         });
 
-        // Fullscreen & Orientation Lock (Landscape)
-        const fullBtn = document.getElementById('fullBtn');
-        fullBtn.addEventListener('click', async () => {
+        document.getElementById('fullBtn').addEventListener('click', async () => {
             if (!document.fullscreenElement) {
-                try {
-                    if (c.requestFullscreen) await c.requestFullscreen();
-                    else if (c.webkitRequestFullscreen) await c.webkitRequestFullscreen();
-                    
-                    // Tilt to landscape on mobile
-                    if (screen.orientation && screen.orientation.lock) {
-                        await screen.orientation.lock('landscape').catch(() => {});
-                    }
-                } catch (err) {}
+                if (c.requestFullscreen) await c.requestFullscreen();
+                else if (c.webkitRequestFullscreen) await c.webkitRequestFullscreen();
+                if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
             } else {
                 if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-                if (screen.orientation && screen.orientation.unlock) {
-                    screen.orientation.unlock();
-                }
+                if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
             }
         });
-
-        // Spinner Logic
-        v.addEventListener('waiting', () => spinner.classList.remove('hidden'));
-        v.addEventListener('playing', () => spinner.classList.add('hidden'));
-        v.addEventListener('canplay', () => spinner.classList.add('hidden'));
-
     </script>
 </body>
 </html>
