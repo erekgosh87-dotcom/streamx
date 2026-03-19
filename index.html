@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape-primary">
-    <title>StreamX Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StreamX Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -13,174 +13,120 @@
         }
 
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            margin: 0; padding: 0; box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
 
         body, html {
             background-color: var(--bg-dark);
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
+            height: 100%; width: 100%;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             font-family: 'Inter', sans-serif;
             user-select: none;
         }
 
-        .player-wrapper {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #000;
-            position: relative;
-        }
-
         .video-container {
             position: relative;
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             overflow: hidden;
         }
 
-        @media (min-aspect-ratio: 16/9) {
-            video { width: auto; height: 100%; }
-        }
-        @media (max-aspect-ratio: 16/9) {
-            video { width: 100%; height: auto; }
-        }
-
         video { 
+            width: 100%; height: 100%;
             object-fit: contain; 
             pointer-events: none;
             transition: filter 0.3s ease;
         }
 
+        /* Full Size in Fullscreen */
+        .video-container:fullscreen video {
+            object-fit: contain; /* Keeps aspect ratio but fills the black space */
+        }
+        
+        /* Apply object-fit: cover only if we want to force fill (might crop) */
+        /* For now, contain is safer for movies, but I'll make sure the container is black edge-to-edge. */
+
         video[data-quality="480"] { filter: blur(2px) contrast(0.8); }
         video[data-quality="720"] { filter: blur(0.7px); }
 
         .hud {
-            position: absolute;
-            inset: 0;
-            z-index: 20;
+            position: absolute; inset: 0; z-index: 20;
             opacity: 0;
             transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.5) 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            display: flex; flex-direction: column; justify-content: space-between;
         }
 
-        .video-container.active .hud {
-            opacity: 1;
-        }
+        .video-container.active .hud { opacity: 1; }
 
         .progress-container {
-            position: absolute;
-            bottom: 80px;
-            left: 24px;
-            right: 24px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            z-index: 30;
+            position: absolute; bottom: 85px; left: 24px; right: 24px;
+            height: 30px; display: flex; align-items: center; cursor: pointer; z-index: 30;
         }
-
         .progress-rail {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
-            position: relative;
-            transition: height 0.2s;
+            width: 100%; height: 4px; background: rgba(255, 255, 255, 0.2); border-radius: 2px;
+            position: relative; transition: height 0.2s;
         }
         .progress-container:hover .progress-rail { height: 6px; }
-
         .progress-fill {
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 0%;
-            background: var(--primary);
-            border-radius: 2px;
+            position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+            background: var(--primary); border-radius: 2px;
             box-shadow: 0 0 10px var(--primary-glow);
         }
-
         .progress-knob {
-            position: absolute;
-            right: -6px; top: 50%;
-            transform: translateY(-50%) scale(0);
-            width: 14px; height: 14px;
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--primary);
-            transition: transform 0.2s;
+            position: absolute; right: -7px; top: 50%; transform: translateY(-50%) scale(0);
+            width: 16px; height: 16px; background: #fff; border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary); transition: transform 0.2s;
         }
         .progress-container:hover .progress-knob { transform: translateY(-50%) scale(1); }
 
         .controls-bar {
-            width: 100%;
-            padding: 0 24px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            width: 100%; padding: 0 32px 32px;
+            display: flex; align-items: center; justify-content: space-between;
         }
-
-        .controls-left, .controls-right { display: flex; align-items: center; gap: 24px; }
+        .controls-left, .controls-right { display: flex; align-items: center; gap: 28px; }
 
         button {
             background: none; border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            color: #fff; transition: transform 0.2s;
+            color: #fff; transition: transform 0.2s, opacity 0.2s;
         }
-        button:hover { transform: scale(1.1); }
-        svg { width: 30px; height: 30px; fill: currentColor; }
+        button:hover { transform: scale(1.15); opacity: 1; }
+        button:active { transform: scale(0.95); }
+        
+        /* Updated SVG icons to be bolder and cleaner */
+        svg { width: 32px; height: 32px; fill: currentColor; }
 
-        .time-display { font-size: 14px; font-variant-numeric: tabular-nums; color: #ccc; letter-spacing: 0.5px; }
+        .time-display { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; color: #ccc; }
 
         .quality-wrapper { position: relative; }
         .quality-menu {
-            position: absolute; bottom: 50px; right: 0;
-            background: rgba(15, 15, 15, 0.95);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            display: none; flex-direction: column;
-            min-width: 100px; overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,1);
+            position: absolute; bottom: 60px; right: 0;
+            background: rgba(10, 10, 10, 0.95); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; display: none; flex-direction: column;
+            min-width: 110px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,1);
         }
         .quality-menu.show { display: flex; }
-        .quality-menu div { padding: 12px 16px; font-size: 13px; color: #888; cursor: pointer; }
+        .quality-menu div { padding: 14px 20px; font-size: 14px; color: #aaa; cursor: pointer; }
         .quality-menu div:hover { background: rgba(255,255,255,0.1); color: #fff; }
-        .quality-menu div.active { color: var(--primary); font-weight: bold; }
+        .quality-menu div.active { color: var(--primary); font-weight: bold; background: rgba(0, 238, 255, 0.05); }
 
-        .tap-regions {
-            position: absolute; inset: 0;
-            display: flex; z-index: 15;
-            pointer-events: auto;
-        }
+        .tap-regions { position: absolute; inset: 0; display: flex; z-index: 15; pointer-events: auto; }
         .tap-left, .tap-right { width: 50%; height: 100%; }
 
         .center-anim {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 100px; height: 100px; background: rgba(0,0,0,0.4);
+            width: 100px; height: 100px; background: rgba(0,0,0,0.5);
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
             opacity: 0; pointer-events: none; z-index: 25;
         }
-        .center-anim.active { animation: ringPop 0.5s ease-out; }
+        .center-anim.active { animation: ringPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes ringPop {
             0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
         }
 
         .skip-hint {
@@ -193,72 +139,88 @@
         .skip-hint.active { animation: fadeSlide 0.6s ease-out; }
         @keyframes fadeSlide {
             0% { opacity: 0; transform: translateY(-50%) scale(0.9); }
-            30% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+            30% { opacity: 1; transform: translateY(-50%) scale(1.15); }
             100% { opacity: 0; transform: translateY(-50%) scale(1); }
         }
-        .skip-text { font-weight: 800; font-size: 24px; margin-top: 8px; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
+        .skip-text { font-weight: 800; font-size: 26px; margin-top: 10px; color: #fff; text-shadow: 0 0 12px rgba(0,0,0,1); }
 
-        @media (max-width: 600px) {
-            .progress-container { left: 16px; right: 16px; bottom: 70px; }
-            .controls-bar { padding: 0 16px 16px; }
-            svg { width: 24px; height: 24px; }
-            .time-display { font-size: 12px; }
+        @media (max-width: 768px) {
+            .progress-container { left: 16px; right: 16px; bottom: 85px; }
+            .controls-bar { padding: 0 24px 24px; }
+            svg { width: 28px; height: 28px; }
+            .time-display { font-size: 13px; }
         }
+
         .hidden { display: none !important; }
+
+        /* Full Width and Landscape Orientation for Fullscreen Mode */
+        :fullscreen video, :-webkit-full-screen video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+        }
+
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div class="player-wrapper">
-        <div class="video-container" id="container">
-            <video id="player" playsinline autoplay preload="auto" disablePictureInPicture data-quality="1080"></video>
+    <div class="video-container active" id="container">
+        <!-- Main Video -->
+        <video id="player" playsinline autoplay preload="auto" disablePictureInPicture data-quality="1080"></video>
 
-            <div class="tap-regions">
-                <div class="tap-left" id="tapLeft"></div>
-                <div class="tap-right" id="tapRight"></div>
-            </div>
+        <!-- Interactions -->
+        <div class="tap-regions">
+            <div class="tap-left" id="tapLeft"></div>
+            <div class="tap-right" id="tapRight"></div>
+        </div>
 
-            <div class="center-anim" id="centerAnim"><svg viewBox="0 0 24 24" id="centerIcon"></svg></div>
-            
-            <div class="skip-hint skip-left" id="hintLeft">
-                <svg viewBox="0 0 24 24"><path d="M12.5 3C17.15 3 21 6.85 21 11.5S17.15 20 12.5 20 4 16.15 4 11.5H1.5L5 8l3.5 3.5H6c0 3.59 2.91 6.5 6.5 6.5s6.5-2.91 6.5-6.5-2.91-6.5-6.5-6.5V3z"/></svg>
-                <div class="skip-text">10s</div>
-            </div>
+        <div class="center-anim" id="centerAnim"><svg viewBox="0 0 24 24" id="centerIcon"></svg></div>
+        
+        <div class="skip-hint skip-left" id="hintLeft">
+            <svg viewBox="0 0 24 24"><path d="M12.5 3C17.15 3 21 6.85 21 11.5S17.15 20 12.5 20 4 16.15 4 11.5H1.5L5 8l3.5 3.5H6c0 3.59 2.91 6.5 6.5 6.5s6.5-2.91 6.5-6.5-2.91-6.5-6.5-6.5V3z"/></svg>
+            <div class="skip-text">10s</div>
+        </div>
 
-            <div class="skip-hint skip-right" id="hintRight">
-                <svg viewBox="0 0 24 24"><path d="M11.5 3C6.85 3 3 6.85 3 11.5S6.85 20 11.5 20s8.5-3.85 8.5-8.5h2.5L19 8l-3.5 3.5h2.5c0 3.59-2.91 6.5-6.5 6.5S5 16.09 5 11.5 7.91 5 11.5 5V3z"/></svg>
-                <div class="skip-text">10s</div>
-            </div>
+        <div class="skip-hint skip-right" id="hintRight">
+            <svg viewBox="0 0 24 24"><path d="M11.5 3C6.85 3 3 6.85 3 11.5S6.85 20 11.5 20s8.5-3.85 8.5-8.5h2.5L19 8l-3.5 3.5h2.5c0 3.59-2.91 6.5-6.5 6.5S5 16.09 5 11.5 7.91 5 11.5 5V3z"/></svg>
+            <div class="skip-text">10s</div>
+        </div>
 
-            <div class="hud">
-                <div class="top-bar"></div>
-                <div class="bottom-area">
-                    <div class="progress-container" id="scrubber">
-                        <div class="progress-rail">
-                            <div class="progress-fill" id="fill">
-                                <div class="progress-knob"></div>
-                            </div>
+        <!-- Hud Overlay -->
+        <div class="hud">
+            <div></div> <!-- Top padding -->
+            <div class="bottom-hud">
+                <div class="progress-container" id="scrubber">
+                    <div class="progress-rail">
+                        <div class="progress-fill" id="fill">
+                            <div class="progress-knob"></div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="controls-bar">
-                        <div class="controls-left">
-                            <button id="playBtn"><svg viewBox="0 0 24 24" id="playIcon"></svg></button>
-                            <button id="muteBtn"><svg viewBox="0 0 24 24" id="muteIcon"></svg></button>
-                            <div class="time-display"><span id="currTime">00:00</span> / <span id="durTime">00:00</span></div>
-                        </div>
+                <div class="controls-bar">
+                    <div class="controls-left">
+                        <button id="playBtn"><svg viewBox="0 0 24 24" id="playIcon"></svg></button>
+                        <button id="muteBtn"><svg viewBox="0 0 24 24" id="muteIcon"></svg></button>
+                        <div class="time-display"><span id="currTime">00:00</span> / <span id="durTime">00:00</span></div>
+                    </div>
 
-                        <div class="controls-right">
-                            <div class="quality-wrapper">
-                                <button id="qualityBtn"><svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg></button>
-                                <div class="quality-menu" id="qualityMenu">
-                                    <div data-q="1080" class="active">1080p</div>
-                                    <div data-q="720">720p</div>
-                                    <div data-q="480">480p</div>
-                                </div>
+                    <div class="controls-right">
+                        <div class="quality-wrapper">
+                            <button id="qualityBtn"><svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg></button>
+                            <div class="quality-menu" id="qualityMenu">
+                                <div data-q="1080" class="active">1080p</div>
+                                <div data-q="720">720p</div>
+                                <div data-q="480">480p</div>
                             </div>
-                            <button id="fullBtn"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
                         </div>
+                        
+                        <!-- REPLACED ICON WITH SQUARE VERSION FROM USER IMAGE -->
+                        <button id="fullBtn">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M5 15H3V21H9V19H5V15ZM3 9H5V5H9V3H3V9ZM19 19H15V21H21V15H19V19ZM15 3V5H19V9H21V3H15Z" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -292,10 +254,7 @@
             clearTimeout(idleTimer);
             if (!v.paused) idleTimer = setTimeout(() => c.classList.remove('active'), 3000);
         }
-
-        ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(evt => {
-            window.addEventListener(evt, resetHUD);
-        });
+        ['mousemove', 'touchstart', 'keydown'].forEach(evt => window.addEventListener(evt, resetHUD));
 
         function togglePlay() {
             if (v.paused) { v.play(); playIcon.innerHTML = `<path d="${ICONS.pause}"/>`; }
@@ -326,23 +285,15 @@
         let isScrubbing = false;
 
         let tapCountL = 0, tapCountR = 0, tapTimerL, tapTimerR;
-        document.getElementById('tapLeft').addEventListener('click', (e) => {
-            tapCountL++;
-            clearTimeout(tapTimerL);
-            if (tapCountL === 2) {
-                skip(-10, 'hintLeft'); tapCountL = 0;
-            } else {
-                tapTimerL = setTimeout(() => { if (tapCountL === 1) togglePlay(); tapCountL = 0; }, 300);
-            }
+        document.getElementById('tapLeft').addEventListener('click', () => {
+            tapCountL++; clearTimeout(tapTimerL);
+            if (tapCountL === 2) { skip(-10, 'hintLeft'); tapCountL = 0; }
+            else { tapTimerL = setTimeout(() => { if (tapCountL === 1) togglePlay(); tapCountL = 0; }, 280); }
         });
-        document.getElementById('tapRight').addEventListener('click', (e) => {
-            tapCountR++;
-            clearTimeout(tapTimerR);
-            if (tapCountR === 2) {
-                skip(10, 'hintRight'); tapCountR = 0;
-            } else {
-                tapTimerR = setTimeout(() => { if (tapCountR === 1) togglePlay(); tapCountR = 0; }, 300);
-            }
+        document.getElementById('tapRight').addEventListener('click', () => {
+            tapCountR++; clearTimeout(tapTimerR);
+            if (tapCountR === 2) { skip(10, 'hintRight'); tapCountR = 0; }
+            else { tapTimerR = setTimeout(() => { if (tapCountR === 1) togglePlay(); tapCountR = 0; }, 280); }
         });
 
         function skip(sec, hintId) {
@@ -354,7 +305,7 @@
 
         v.addEventListener('timeupdate', () => {
             const pct = (v.currentTime / v.duration) * 100;
-            fill.style.width = `${pct}%`;
+            fill.style.width = pct + '%';
             currTime.innerText = format(v.currentTime);
         });
         v.addEventListener('loadedmetadata', () => durTime.innerText = format(v.duration));
@@ -381,13 +332,33 @@
             });
         });
 
+        // REFINED FULLSCREEN + ORIENTATION LOCK
         document.getElementById('fullBtn').addEventListener('click', async () => {
-            if (!document.fullscreenElement) {
-                if (c.requestFullscreen) await c.requestFullscreen();
-                else if (c.webkitRequestFullscreen) await c.webkitRequestFullscreen();
-                if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                // Try entering fullscreen
+                try {
+                    const method = c.requestFullscreen || c.webkitRequestFullscreen || c.msRequestFullscreen;
+                    if (method) await method.call(c);
+                    
+                    // Attempt to Lock Landscape for Phones
+                    if (screen.orientation && screen.orientation.lock) {
+                        // Some browsers require a small delay or user interaction context which we have here
+                        await screen.orientation.lock('landscape').catch(e => console.log("Orientation lock failed: ", e));
+                    }
+                } catch (err) {
+                    console.error("Fullscreen failed:", err);
+                }
             } else {
-                if (document.exitFullscreen) document.exitFullscreen();
+                const exitMethod = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+                if (exitMethod) await exitMethod.call(document);
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
                 if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
             }
         });
