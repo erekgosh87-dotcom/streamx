@@ -10,7 +10,7 @@
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
         body, html { background: var(--bg); height:100%; width:100%; overflow:hidden; font-family:'Inter',sans-serif; user-select:none; }
         .container { position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center; background:#000; overflow:hidden; }
-        video { width:100%; height:100%; object-fit:contain; pointer-events:none; }
+        video { width:100%; height:100%; object-fit:contain; pointer-events:none; transition: filter 0.3s ease; }
         video[data-quality="480"] { filter: blur(2.5px) contrast(0.85); }
         video[data-quality="720"] { filter: blur(0.8px); }
         
@@ -29,7 +29,8 @@
         /* Row */
         .row { display:flex; align-items:center; justify-content:space-between; width:100%; }
         .btns { display:flex; align-items:center; gap:25px; }
-        button { background:none; border:none; color:#fff; cursor:pointer; display:flex; align-items:center; }
+        button { background:none; border:none; color:#fff; cursor:pointer; display:flex; align-items:center; transition: opacity 0.2s; }
+        button:hover { opacity: 0.8; }
         svg { width:26px; height:26px; fill:currentColor; }
         .time { font-size:14px; color:#fff; font-variant-numeric:tabular-nums; }
 
@@ -50,11 +51,18 @@
         @keyframes hintAnim { 0% { opacity:0; transform:translateY(-50%) scale(0.9); } 30% { opacity:1; } 100% { opacity:0; transform:translateY(-50%) scale(1.1); } }
         .hint-txt { font-weight:800; font-size:24px; color:#fff; margin-top:10px; }
 
-        .q-menu { position:absolute; bottom:60px; right:0; background:#111; border:1px solid #333; border-radius:8px; display:none; flex-direction:column; overflow:hidden; }
-        .q-menu.show { display:flex; }
-        .q-menu div { padding:12px 20px; font-size:13px; color:#999; cursor:pointer; }
-        .q-menu div:hover { background:#222; color:#fff; }
-        .q-menu div.active { color:#fff; font-weight:bold; }
+        .menu { position:absolute; bottom:60px; right:0; background:#111; border:1px solid #333; border-radius:8px; display:none; flex-direction:column; overflow:hidden; min-width:110px; z-index: 50; }
+        .menu.show { display:flex; }
+        .menu div { padding:12px 20px; font-size:13px; color:#999; cursor:pointer; white-space: nowrap; }
+        .menu div:hover { background:#222; color:#fff; }
+        .menu div.active { color:#fff; font-weight:bold; }
+        
+        @media (max-width: 768px) {
+            .bottom { padding:0 20px 25px; }
+            .btns { gap: 20px; }
+            svg { width: 24px; height: 24px; }
+            .time { font-size: 12px; }
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -62,14 +70,12 @@
     <div class="container active" id="con">
         <video id="v" playsinline autoplay preload="auto"></video>
 
-        <!-- Tap Zones -->
         <div class="touch-layer" id="touch">
             <div class="zone side" id="zL"></div>
             <div class="zone center" id="zC"></div>
             <div class="zone side" id="zR"></div>
         </div>
 
-        <!-- Pop Feedback -->
         <div class="pop" id="p"><svg viewBox="0 0 24 24" id="pI" style="fill:#fff;width:30px;height:30px;"></svg></div>
         <div class="hint hintL" id="hL"><svg viewBox="0 0 24 24" style="fill:#fff;width:32px;height:32px;"><path d="M12.5 3C17.15 3 21 6.85 21 11.5S17.15 20 12.5 20 4 16.15 4 11.5H1.5L5 8l3.5 3.5H6c0 3.59 2.91 6.5 6.5 6.5s6.5-2.91 6.5-6.5-2.91-6.5-6.5-6.5V3z"/></svg><div class="hint-txt">10s</div></div>
         <div class="hint hintR" id="hR"><svg viewBox="0 0 24 24" style="fill:#fff;width:32px;height:32px;"><path d="M11.5 3C6.85 3 3 6.85 3 11.5S6.85 20 11.5 20s8.5-3.85 8.5-8.5h2.5L19 8l-3.5 3.5h2.5c0 3.59-2.91 6.5-6.5 6.5S5 16.09 5 11.5 7.91 5 11.5 5V3z"/></svg><div class="hint-txt">10s</div></div>
@@ -84,9 +90,22 @@
                         <div class="time"><span id="ct">0:00</span> / <span id="dt">0:00</span></div>
                     </div>
                     <div class="btns">
+                        <!-- Playback Speed -->
+                        <div style="position:relative;">
+                            <button id="sbnt"><svg viewBox="0 0 24 24"><path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg></button>
+                            <div class="menu" id="sm">
+                                <div data-s="0.5">0.5x</div>
+                                <div data-s="0.75">0.75x</div>
+                                <div data-s="1" class="active">1x (Normal)</div>
+                                <div data-s="1.25">1.25x</div>
+                                <div data-s="1.5">1.5x</div>
+                                <div data-s="2">2x</div>
+                            </div>
+                        </div>
+                        <!-- Quality -->
                         <div style="position:relative;">
                             <button id="qb"><svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg></button>
-                            <div class="q-menu" id="qm"><div data-q="1080" class="active">1080p</div><div data-q="720">720p</div><div data-q="480">480p</div></div>
+                            <div class="menu" id="qm"><div data-q="1080" class="active">1080p</div><div data-q="720">720p</div><div data-q="480">480p</div></div>
                         </div>
                         <button id="fb"><svg viewBox="0 0 24 24"><path d="M5 15H3V21H9V19H5V15ZM3 9H5V5H9V3H3V9ZM19 19H15V21H21V15H19V19ZM15 3V5H19V9H21V3H15Z" /></svg></button>
                     </div>
@@ -99,6 +118,7 @@
         const v = document.getElementById('v'), con = document.getElementById('con');
         const f = document.getElementById('f'), pb = document.getElementById('pb'), pi = document.getElementById('pi');
         const ct = document.getElementById('ct'), dt = document.getElementById('dt'), sb = document.getElementById('sb');
+        const sm = document.getElementById('sm'), sbnt = document.getElementById('sbnt');
         v.src = 'https://pub-82f7b19554224f9eae95dca653d9228e.r2.dev/output.mp4';
 
         const I = { play: 'M8 5v14l11-7z', pause: 'M6 19h4V5H6v14zm8-14v14h4V5h-4z', mute: 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z', unmute: 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z' };
@@ -115,18 +135,9 @@
         sb.onmousedown=(e)=>{sc=true;sct(e);}; window.onmousemove=(e)=>{if(sc)sct(e);}; window.onmouseup=()=>sc=false;
         sb.ontouchstart=sct; let sc=false;
 
-        // FIXED ROBUST TAP LOGIC
         let clicksL=0, clicksR=0, timerL, timerR;
-        document.getElementById('zL').onclick = (e) => {
-            clicksL++; clearTimeout(timerL);
-            if(clicksL===2){ skip(-10,'hL'); clicksL=0; }
-            else timerL = setTimeout(()=>{ if(clicksL===1) toggle(); clicksL=0; }, 280);
-        };
-        document.getElementById('zR').onclick = (e) => {
-            clicksR++; clearTimeout(timerR);
-            if(clicksR===2){ skip(10,'hR'); clicksR=0; }
-            else timerR = setTimeout(()=>{ if(clicksR===1) toggle(); clicksR=0; }, 280);
-        };
+        document.getElementById('zL').onclick = () => { clicksL++; clearTimeout(timerL); if(clicksL===2){ skip(-10,'hL'); clicksL=0; } else timerL = setTimeout(()=>{ if(clicksL===1) toggle(); clicksL=0; }, 280); };
+        document.getElementById('zR').onclick = () => { clicksR++; clearTimeout(timerR); if(clicksR===2){ skip(10,'hR'); clicksR=0; } else timerR = setTimeout(()=>{ if(clicksR===1) toggle(); clicksR=0; }, 280); };
         document.getElementById('zC').onclick = toggle;
 
         function skip(s,id){ v.currentTime+=s; const h=document.getElementById(id); h.classList.remove('active'); void h.offsetWidth; h.classList.add('active'); resetHUD(); }
@@ -135,8 +146,17 @@
         function fm(t){ if(isNaN(t))return"0:00"; let m=Math.floor(t/60), s=Math.floor(t%60); return `${m}:${s.toString().padStart(2,'0')}`; }
 
         document.getElementById('mb').onclick = () => { v.muted=!v.muted; document.getElementById('mi').innerHTML=`<path d="${v.muted?I.mute:I.unmute}"/>`; };
-        document.getElementById('qb').onclick=(e)=>{e.stopPropagation();document.getElementById('qm').classList.toggle('show');};
-        document.querySelectorAll('#qm div').forEach(div=>{ div.onclick=()=>{ document.querySelectorAll('#qm div').forEach(d=>d.classList.remove('active')); div.classList.add('active'); v.dataset.quality=div.dataset.q; }; });
+        
+        // Speed Menu
+        sbnt.onclick=(e)=>{e.stopPropagation();document.getElementById('qm').classList.remove('show');sm.classList.toggle('show');};
+        document.querySelectorAll('#sm div').forEach(div=>{ div.onclick=()=>{ document.querySelectorAll('#sm div').forEach(d=>d.classList.remove('active')); div.classList.add('active'); v.playbackRate = parseFloat(div.dataset.s); sm.classList.remove('show'); }; });
+
+        // Quality Menu
+        document.getElementById('qb').onclick=(e)=>{e.stopPropagation();sm.classList.remove('show');document.getElementById('qm').classList.toggle('show');};
+        document.querySelectorAll('#qm div').forEach(div=>{ div.onclick=()=>{ document.querySelectorAll('#qm div').forEach(d=>d.classList.remove('active')); div.classList.add('active'); v.dataset.quality=div.dataset.q; document.getElementById('qm').classList.remove('show'); }; });
+        
+        window.onclick += () => { sm.classList.remove('show'); document.getElementById('qm').classList.remove('show'); };
+
         document.getElementById('fb').onclick=async()=>{ if(!document.fullscreenElement){ await con.requestFullscreen(); if(screen.orientation&&screen.orientation.lock)await screen.orientation.lock('landscape').catch(()=>{}); }else{ document.exitFullscreen(); } };
     </script>
 </body>
