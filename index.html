@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StreamX Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape-primary">
+    <title>StreamX Player</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #00eeff;
-            --primary-glow: rgba(0, 238, 255, 0.5);
+            --primary: #fff;
+            --primary-glow: rgba(255, 255, 255, 0.4);
             --bg-dark: #000;
         }
 
@@ -41,82 +41,79 @@
             transition: filter 0.3s ease;
         }
 
-        video[data-quality="480"] { filter: blur(2px) contrast(0.8); }
-        video[data-quality="720"] { filter: blur(0.7px); }
+        video[data-quality="480"] { filter: blur(2.5px) contrast(0.85); }
+        video[data-quality="720"] { filter: blur(0.8px); }
 
+        /* HUD: Minimalist Controls */
         .hud {
             position: absolute; inset: 0; z-index: 20;
             opacity: 0;
-            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.5) 100%);
-            display: flex; flex-direction: column; justify-content: space-between;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 25%, transparent 100%);
+            display: flex; flex-direction: column; justify-content: flex-end;
         }
-        .video-container.active .hud { opacity: 1; }
+        .video-container.active .hud { opacity: 1; pointer-events: auto; }
+        .video-container:not(.active) .hud { pointer-events: none; }
 
+        .bottom-hud {
+            padding: 0 40px 40px;
+            width: 100%;
+        }
+
+        /* Progress Scrubber: Minimalist Line */
         .progress-container {
-            position: absolute; bottom: 85px; left: 24px; right: 24px;
-            height: 30px; display: flex; align-items: center; cursor: pointer; z-index: 30;
+            width: 100%;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            z-index: 30;
+            margin-bottom: 25px;
         }
         .progress-rail {
-            width: 100%; height: 4px; background: rgba(255, 255, 255, 0.2); border-radius: 2px;
-            position: relative; transition: height 0.2s;
+            width: 100%; height: 2px; background: rgba(255, 255, 255, 0.25);
+            position: relative;
         }
-        .progress-container:hover .progress-rail { height: 6px; }
         .progress-fill {
             position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
-            background: var(--primary); border-radius: 2px;
-            box-shadow: 0 0 10px var(--primary-glow);
+            background: #fff;
         }
         .progress-knob {
-            position: absolute; right: -7px; top: 50%; transform: translateY(-50%) scale(0);
-            width: 16px; height: 16px; background: #fff; border-radius: 50%;
-            box-shadow: 0 0 10px var(--primary); transition: transform 0.2s;
+            position: absolute; right: -5px; top: 50%; transform: translateY(-50%) scale(0);
+            width: 12px; height: 12px; background: #fff; border-radius: 50%;
+            transition: transform 0.2s;
         }
         .progress-container:hover .progress-knob { transform: translateY(-50%) scale(1); }
 
-        .controls-bar {
-            width: 100%; padding: 0 32px 32px;
+        /* Controls Row */
+        .controls-row {
             display: flex; align-items: center; justify-content: space-between;
+            width: 100%;
         }
-        .controls-left, .controls-right { display: flex; align-items: center; gap: 28px; }
+        .controls-left, .controls-right { display: flex; align-items: center; gap: 32px; }
 
         button {
             background: none; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; transition: transform 0.2s, opacity 0.2s;
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.2s; 
         }
-        button:hover { transform: scale(1.15); opacity: 1; }
-        button:active { transform: scale(0.95); }
-        svg { width: 32px; height: 32px; fill: currentColor; }
+        button:hover { opacity: 0.8; }
+        svg { width: 28px; height: 28px; fill: currentColor; }
 
-        .time-display { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; color: #ccc; }
+        .time-display { font-size: 14px; color: #fff; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: 0.3px; }
 
-        .quality-wrapper { position: relative; }
-        .quality-menu {
-            position: absolute; bottom: 60px; right: 0;
-            background: rgba(10, 10, 10, 0.95); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px; display: none; flex-direction: column;
-            min-width: 110px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,1);
-        }
-        .quality-menu.show { display: flex; }
-        .quality-menu div { padding: 14px 20px; font-size: 14px; color: #aaa; cursor: pointer; }
-        .quality-menu div:hover { background: rgba(255,255,255,0.1); color: #fff; }
-        .quality-menu div.active { color: var(--primary); font-weight: bold; background: rgba(0, 238, 255, 0.05); }
-
-        /* INTERACTION REGIONS: Improved Play/Pause Center + Side Skips */
-        .tap-regions { 
-            position: absolute; inset: 0; display: flex; z-index: 15; pointer-events: auto;
-        }
-        .tap-side { width: 30%; height: 100%; cursor: pointer; }
+        /* Interaction Layer: Full Screen Tap Regions */
+        .tap-regions { position: absolute; inset: 0; display: flex; z-index: 15; pointer-events: auto; }
+        .tap-side { width: 35%; height: 100%; cursor: pointer; }
         .tap-center { flex: 1; height: 100%; cursor: pointer; }
 
         .center-anim {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 100px; height: 100px; background: rgba(0,0,0,0.5);
+            width: 90px; height: 90px; background: rgba(0,0,0,0.5);
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
             opacity: 0; pointer-events: none; z-index: 25;
         }
-        .center-anim.active { animation: ringPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .center-anim.active { animation: ringPop 0.5s ease; }
         @keyframes ringPop {
             0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
@@ -129,26 +126,34 @@
         }
         .skip-left { left: 15%; }
         .skip-right { right: 15%; }
-        .skip-hint.active { animation: fadeSlide 0.6s ease-out; }
+        .skip-hint.active { animation: fadeSlide 0.6s ease; }
         @keyframes fadeSlide {
             0% { opacity: 0; transform: translateY(-50%) scale(0.9); }
-            30% { opacity: 1; transform: translateY(-50%) scale(1.15); }
-            100% { opacity: 0; transform: translateY(-50%) scale(1); }
+            30% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+            100% { opacity: 0; transform: translateY(-50%) scale(1.05); }
         }
-        .skip-text { font-weight: 800; font-size: 26px; margin-top: 10px; color: #fff; text-shadow: 0 0 12px rgba(0,0,0,1); }
+        .skip-text { font-weight: 800; font-size: 24px; margin-top: 10px; color: #fff; }
+
+        /* Quality Menu */
+        .quality-wrapper { position: relative; }
+        .quality-menu {
+            position: absolute; bottom: 60px; right: 0;
+            background: rgba(15, 15, 15, 0.98); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; display: none; flex-direction: column;
+            min-width: 100px; box-shadow: 0 10px 40px rgba(0,0,0,1); overflow: hidden;
+        }
+        .quality-menu.show { display: flex; }
+        .quality-menu div { padding: 12px 18px; font-size: 13px; color: #aaa; cursor: pointer; }
+        .quality-menu div:hover { background: #222; color: #fff; }
+        .quality-menu div.active { color: #fff; font-weight: bold; }
 
         @media (max-width: 768px) {
-            .progress-container { left: 16px; right: 16px; bottom: 85px; }
-            .controls-bar { padding: 0 24px 24px; }
-            svg { width: 28px; height: 28px; }
-            .time-display { font-size: 13px; }
+            .bottom-hud { padding: 0 20px 25px; }
+            .controls-left, .controls-right { gap: 20px; }
+            svg { width: 24px; height: 24px; }
+            .time-display { font-size: 12px; }
         }
 
-        .hidden { display: none !important; }
-
-        :fullscreen video, :-webkit-full-screen video {
-            width: 100% !important; height: 100% !important; object-fit: contain;
-        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -158,51 +163,47 @@
 
         <!-- Tap-to-Control Regions -->
         <div class="tap-regions">
-            <div class="tap-side" id="tapLeftBox"></div>
-            <div class="tap-center" id="tapCenterBox"></div> <!-- NEW CENTER TAP ZONE -->
-            <div class="tap-side" id="tapRightBox"></div>
+            <div class="tap-side" id="boxLeft"></div>
+            <div class="tap-center" id="boxCenter"></div>
+            <div class="tap-side" id="boxRight"></div>
         </div>
 
-        <div class="center-anim" id="centerAnim"><svg viewBox="0 0 24 24" id="centerIcon"></svg></div>
+        <div class="center-anim" id="centerAnim"><svg viewBox="0 0 24 24" id="centerIcon" style="fill:#fff;width:35px;height:35px;"></svg></div>
         
-        <div class="skip-hint skip-left" id="hintLeft">
-            <svg viewBox="0 0 24 24"><path d="M12.5 3C17.15 3 21 6.85 21 11.5S17.15 20 12.5 20 4 16.15 4 11.5H1.5L5 8l3.5 3.5H6c0 3.59 2.91 6.5 6.5 6.5s6.5-2.91 6.5-6.5-2.91-6.5-6.5-6.5V3z"/></svg>
-            <div class="skip-text">10s</div>
+        <div class="skip-hint skip-left" id="hintL">
+            <svg viewBox="0 0 24 24" style="fill:#fff;width:32px;height:32px;"><path d="M12.5 3C17.15 3 21 6.85 21 11.5S17.15 20 12.5 20 4 16.15 4 11.5H1.5L5 8l3.5 3.5H6c0 3.59 2.91 6.5 6.5 6.5s6.5-2.91 6.5-6.5-2.91-6.5-6.5-6.5V3z"/></svg>
+            <div class="skip-text">-10s</div>
         </div>
 
-        <div class="skip-hint skip-right" id="hintRight">
-            <svg viewBox="0 0 24 24"><path d="M11.5 3C6.85 3 3 6.85 3 11.5S6.85 20 11.5 20s8.5-3.85 8.5-8.5h2.5L19 8l-3.5 3.5h2.5c0 3.59-2.91 6.5-6.5 6.5S5 16.09 5 11.5 7.91 5 11.5 5V3z"/></svg>
-            <div class="skip-text">10s</div>
+        <div class="skip-hint skip-right" id="hintR">
+            <svg viewBox="0 0 24 24" style="fill:#fff;width:32px;height:32px;"><path d="M11.5 3C6.85 3 3 6.85 3 11.5S6.85 20 11.5 20s8.5-3.85 8.5-8.5h2.5L19 8l-3.5 3.5h2.5c0 3.59-2.91 6.5-6.5 6.5S5 16.09 5 11.5 7.91 5 11.5 5V3z"/></svg>
+            <div class="skip-text">+10s</div>
         </div>
 
-        <div class="hud">
-            <div></div>
+        <!-- HUD: Minimal Overlay -->
+        <div class="hud" id="hud">
             <div class="bottom-hud">
                 <div class="progress-container" id="scrubber">
-                    <div class="progress-rail">
-                        <div class="progress-fill" id="fill">
-                            <div class="progress-knob"></div>
-                        </div>
-                    </div>
+                    <div class="progress-rail"><div class="progress-fill" id="fill"></div></div>
                 </div>
 
-                <div class="controls-bar">
+                <div class="controls-row">
                     <div class="controls-left">
-                        <button id="playBtn"><svg viewBox="0 0 24 24" id="playIcon"></svg></button>
-                        <button id="muteBtn"><svg viewBox="0 0 24 24" id="muteIcon"></svg></button>
-                        <div class="time-display"><span id="currTime">00:00</span> / <span id="durTime">00:00</span></div>
+                        <button id="pBtn"><svg viewBox="0 0 24 24" id="pIco"></svg></button>
+                        <button id="mBtn"><svg viewBox="0 0 24 24" id="mIco"></svg></button>
+                        <div class="time-display"><span id="cT">00:00</span> / <span id="dT">00:00</span></div>
                     </div>
 
                     <div class="controls-right">
                         <div class="quality-wrapper">
-                            <button id="qualityBtn"><svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg></button>
-                            <div class="quality-menu" id="qualityMenu">
+                            <button id="qBtn"><svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg></button>
+                            <div class="quality-menu" id="qMenu">
                                 <div data-q="1080" class="active">1080p</div>
                                 <div data-q="720">720p</div>
                                 <div data-q="480">480p</div>
                             </div>
                         </div>
-                        <button id="fullBtn"><svg viewBox="0 0 24 24"><path d="M5 15H3V21H9V19H5V15ZM3 9H5V5H9V3H3V9ZM19 19H15V21H21V15H19V19ZM15 3V5H19V9H21V3H15Z" /></svg></button>
+                        <button id="fBtn"><svg viewBox="0 0 24 24"><path d="M5 15H3V21H9V19H5V15ZM3 9H5V5H9V3H3V9ZM19 19H15V21H21V15H19V19ZM15 3V5H19V9H21V3H15Z" /></svg></button>
                     </div>
                 </div>
             </div>
@@ -213,79 +214,66 @@
         const v = document.getElementById('player');
         const c = document.getElementById('container');
         const fill = document.getElementById('fill');
-        const playBtn = document.getElementById('playBtn');
-        const playIcon = document.getElementById('playIcon');
-        const currTime = document.getElementById('currTime');
-        const durTime = document.getElementById('durTime');
-        const scrubber = document.getElementById('scrubber');
+        const pBtn = document.getElementById('pBtn'), pIco = document.getElementById('pIco');
+        const cT = document.getElementById('cT'), dT = document.getElementById('dT');
+        const s = document.getElementById('scrubber');
 
         v.src = 'https://pub-82f7b19554224f9eae95dca653d9228e.r2.dev/output.mp4';
 
-        const ICONS = {
+        const I = {
             play: 'M8 5v14l11-7z', pause: 'M6 19h4V5H6v14zm8-14v14h4V5h-4z',
             mute: 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z',
             unmute: 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'
         };
 
-        playIcon.innerHTML = `<path d="${ICONS.play}"/>`;
-        document.getElementById('muteIcon').innerHTML = `<path d="${ICONS.unmute}"/>`;
+        pIco.innerHTML = `<path d="${I.play}"/>`;
+        document.getElementById('mIco').innerHTML = `<path d="${I.unmute}"/>`;
 
-        let idleTimer;
+        let timer;
         function resetHUD() {
             c.classList.add('active');
-            clearTimeout(idleTimer);
-            if (!v.paused) idleTimer = setTimeout(() => c.classList.remove('active'), 3000);
+            clearTimeout(timer);
+            if (!v.paused) timer = setTimeout(() => c.classList.remove('active'), 3000);
         }
-        ['mousemove', 'touchstart', 'keydown'].forEach(evt => window.addEventListener(evt, resetHUD));
+        ['mousemove', 'touchstart', 'keydown'].forEach(e => window.addEventListener(e, resetHUD));
 
-        function togglePlay() {
-            if (v.paused) { v.play(); playIcon.innerHTML = `<path d="${ICONS.pause}"/>`; }
-            else { v.pause(); playIcon.innerHTML = `<path d="${ICONS.play}"/>`; }
-            showPop(v.paused ? ICONS.pause : ICONS.play);
+        function toggleP() {
+            if (v.paused) { v.play(); pIco.innerHTML = `<path d="${I.pause}"/>`; }
+            else { v.pause(); pIco.innerHTML = `<path d="${I.play}"/>`; }
+            pop(v.paused ? I.pause : I.play);
         }
-        playBtn.addEventListener('click', togglePlay);
+        pBtn.onclick = toggleP;
 
-        function showPop(d) {
-            const anim = document.getElementById('centerAnim');
+        function pop(d) {
+            const a = document.getElementById('centerAnim');
             document.getElementById('centerIcon').innerHTML = `<path d="${d}"/>`;
-            anim.classList.remove('active'); void anim.offsetWidth; anim.classList.add('active');
+            a.classList.remove('active'); void a.offsetWidth; a.classList.add('active');
         }
 
-        function updateScrub(e) {
-            const rect = scrubber.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-            v.currentTime = pct * v.duration;
+        function scrub(e) {
+            const r = s.getBoundingClientRect();
+            const x = e.touches ? e.touches[0].clientX : e.clientX;
+            const p = Math.max(0, Math.min(1, (x - r.left) / r.width));
+            v.currentTime = p * v.duration;
         }
+        s.onmousedown = (e) => { scrubbing = true; scrub(e); };
+        window.onmousemove = (e) => { if (scrubbing) scrub(e); };
+        window.onmouseup = () => scrubbing = false;
+        s.ontouchstart = scrub;
+        let scrubbing = false;
 
-        scrubber.addEventListener('mousedown', (e) => { isScrubbing = true; updateScrub(e); });
-        window.addEventListener('mousemove', (e) => { if (isScrubbing) updateScrub(e); });
-        window.addEventListener('mouseup', () => isScrubbing = false);
-        scrubber.addEventListener('touchstart', (e) => { isScrubbing = true; updateScrub(e); }, {passive:false});
-        window.addEventListener('touchmove', (e) => { if (isScrubbing) updateScrub(e); }, {passive:false});
-        window.addEventListener('touchend', () => isScrubbing = false);
-        let isScrubbing = false;
-
-        // UPDATED CLICK HANDLING: Skip on sides, Play/Pause in center
-        let tapCountL = 0, tapCountR = 0, tapTimerL, tapTimerR;
-        
-        document.getElementById('tapLeftBox').addEventListener('click', () => {
-            tapCountL++; clearTimeout(tapTimerL);
-            if (tapCountL === 2) { skip(-10, 'hintLeft'); tapCountL = 0; }
-            else { tapTimerL = setTimeout(() => { if (tapCountL === 1) togglePlay(); tapCountL = 0; }, 280); }
-        });
-
-        document.getElementById('tapRightBox').addEventListener('click', () => {
-            tapCountR++; clearTimeout(tapTimerR);
-            if (tapCountR === 2) { skip(10, 'hintRight'); tapCountR = 0; }
-            else { tapTimerR = setTimeout(() => { if (tapCountR === 1) togglePlay(); tapCountR = 0; }, 280); }
-        });
-
-        document.getElementById('tapCenterBox').addEventListener('click', () => {
-            // Instant play/pause in the middle
-            togglePlay();
-            resetHUD();
-        });
+        let tapL = 0, tapR = 0, tL, tR;
+        document.getElementById('boxLeft').onclick = () => {
+            tapL++; clearTimeout(tL);
+            if (tapL === 2) { skip(-10, 'hintL'); tapL = 0; }
+            else tL = setTimeout(() => { if (tapL === 1) toggleP(); tapL = 0; }, 300);
+        };
+        document.getElementById('boxRight').onclick = () => {
+            tapR++; clearTimeout(tR);
+            if (tapR === 2) { skip(10, 'hintR'); tapR = 0; }
+            else tR = setTimeout(() => { if (tapR === 1) toggleP(); tapR = 0; }, 300);
+        };
+        document.getElementById('boxCenter').onclick = toggleP;
 
         function skip(sec, hintId) {
             v.currentTime += sec;
@@ -294,48 +282,42 @@
             resetHUD();
         }
 
-        v.addEventListener('timeupdate', () => {
-            const pct = (v.currentTime / v.duration) * 100;
-            fill.style.width = pct + '%';
-            currTime.innerText = format(v.currentTime);
-        });
-        v.addEventListener('loadedmetadata', () => durTime.innerText = format(v.duration));
-        function format(t) {
+        v.ontimeupdate = () => {
+            fill.style.width = (v.currentTime / v.duration) * 100 + '%';
+            cT.innerText = fmt(v.currentTime);
+        };
+        v.onloadedmetadata = () => dT.innerText = fmt(v.duration);
+        function fmt(t) {
             if (isNaN(t)) return "00:00";
             let m = Math.floor(t / 60), s = Math.floor(t % 60);
-            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            return `${m}:${s.toString().padStart(2, '0')}`;
         }
 
-        document.getElementById('muteBtn').addEventListener('click', () => {
+        document.getElementById('mBtn').onclick = () => {
             v.muted = !v.muted;
-            document.getElementById('muteIcon').innerHTML = `<path d="${v.muted ? ICONS.mute : ICONS.unmute}"/>`;
-        });
+            document.getElementById('mIco').innerHTML = `<path d="${v.muted ? I.mute : I.unmute}"/>`;
+        };
 
-        document.getElementById('qualityBtn').addEventListener('click', (e) => {
+        document.getElementById('qBtn').onclick = (e) => {
             e.stopPropagation();
-            document.getElementById('qualityMenu').classList.toggle('show');
-        });
-        document.querySelectorAll('.quality-menu div').forEach(div => {
-            div.addEventListener('click', () => {
-                document.querySelectorAll('.quality-menu div').forEach(d => d.classList.remove('active'));
+            document.getElementById('qMenu').classList.toggle('show');
+        };
+        document.querySelectorAll('#qMenu div').forEach(div => {
+            div.onclick = () => {
+                document.querySelectorAll('#qMenu div').forEach(d => d.classList.remove('active'));
                 div.classList.add('active');
                 v.dataset.quality = div.dataset.q;
-            });
+            };
         });
 
-        document.getElementById('fullBtn').addEventListener('click', async () => {
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                try {
-                    const method = c.requestFullscreen || c.webkitRequestFullscreen || c.msRequestFullscreen;
-                    if (method) await method.call(c);
-                    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
-                } catch (err) {}
+        document.getElementById('fBtn').onclick = async () => {
+            if (!document.fullscreenElement) {
+                await c.requestFullscreen();
+                if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
             } else {
-                const exitMethod = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
-                if (exitMethod) await exitMethod.call(document);
-                if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+                document.exitFullscreen();
             }
-        });
+        };
     </script>
 </body>
 </html>
