@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StreamX</title>
-    <!-- Modern typography -->
+    <title>StreamX - Dhurandhar</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -35,10 +34,10 @@
             min-height: 100vh;
         }
 
-        /* Top Header */
         header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             padding: 24px 48px;
             background: rgba(7, 7, 9, 0.7);
             backdrop-filter: blur(12px);
@@ -49,13 +48,20 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        header h1 {
+        .animated-title {
             font-size: 26px;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            background: linear-gradient(90deg, #ff0055, #ffaa00, #00eeff, #ff0055);
+            background-size: 300% 100%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: gradientMove 4s infinite linear;
             letter-spacing: -1px;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
         }
 
         main {
@@ -66,7 +72,6 @@
             padding: 0 40px;
         }
 
-        /* Player Container */
         .video-container {
             position: relative;
             width: 100%;
@@ -84,15 +89,18 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            pointer-events: none; /* Interact via wrapper */
+            pointer-events: none;
+            transition: filter 0.5s ease;
         }
-        
-        /* Hide Default Webkit Controls just in case */
+
         video::-webkit-media-controls {
             display: none !important;
         }
 
-        /* Loading Spinner */
+        /* Fake Video Quality Decreaser */
+        video[data-quality="720"] { filter: blur(0.7px) contrast(0.95); }
+        video[data-quality="480"] { filter: blur(1.5px) contrast(0.85); }
+
         .spinner-wrapper {
             position: absolute;
             inset: 0;
@@ -118,7 +126,6 @@
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .hidden { opacity: 0; pointer-events: none; }
 
-        /* Controls Bottom Overlay */
         .controls-overlay {
             position: absolute;
             inset: 0;
@@ -131,13 +138,11 @@
             z-index: 20;
         }
 
-        /* Show controls on hover or when paused/active */
         .video-container:hover .controls-overlay,
         .video-container.active .controls-overlay {
             opacity: 1;
         }
         
-        /* Don't hide controls fully if they are hovered */
         .controls-overlay:hover {
             opacity: 1 !important;
         }
@@ -147,7 +152,6 @@
             width: 100%;
         }
 
-        /* Progress Bar Base */
         .progress-wrapper {
             position: relative;
             width: 100%;
@@ -182,7 +186,6 @@
             transition: width 0.1s linear;
         }
 
-        /* Scrubber Handle */
         .progress-bar::after {
             content: '';
             position: absolute;
@@ -202,7 +205,6 @@
             transform: translateY(-50%) scale(1);
         }
 
-        /* Buttons Row */
         .buttons-row {
             display: flex;
             align-items: center;
@@ -215,6 +217,8 @@
             gap: 24px;
         }
 
+        .left-controls { gap: 16px; }
+
         button {
             background: none;
             border: none;
@@ -225,42 +229,31 @@
             justify-content: center;
             transition: transform 0.2s, filter 0.2s;
             outline: none;
+            color: #fff;
         }
 
         button:hover {
             transform: scale(1.15);
         }
 
-        .play-btn {
-            width: 40px;
-            height: 40px;
-        }
-
+        .play-btn { width: 40px; height: 40px; }
         .play-btn svg {
-            width: 100%;
-            height: 100%;
-            fill: #fff;
+            width: 100%; height: 100%; fill: #fff;
             filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
             transition: filter 0.3s;
         }
+        .play-btn:hover svg { filter: drop-shadow(0 0 12px var(--primary)); }
 
-        .play-btn:hover svg {
-            filter: drop-shadow(0 0 12px var(--primary));
-        }
+        .skip-btn { width: 32px; height: 32px; font-weight: bold; position: relative;}
+        .skip-btn svg { width: 28px; height: 28px; fill: #fff; opacity: 0.9; }
 
         .icon {
-            width: 24px;
-            height: 24px;
-            fill: #fff;
-            opacity: 0.9;
+            width: 24px; height: 24px; fill: #fff; opacity: 0.9;
             transition: opacity 0.2s;
         }
 
-        button:hover .icon {
-            opacity: 1;
-        }
+        button:hover .icon, button:hover svg { opacity: 1; }
 
-        /* Volume Slider */
         .volume-container {
             display: flex;
             align-items: center;
@@ -287,43 +280,53 @@
 
         .volume-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
+            width: 12px; height: 12px;
             border-radius: 50%;
             background: #fff;
         }
 
-        /* Time Display */
         .time-display {
             font-size: 14px;
             font-weight: 500;
-            letter-spacing: 0.5px;
             font-variant-numeric: tabular-nums;
             color: rgba(255,255,255,0.7);
         }
 
-        .time-display span:first-child {
-            color: #fff;
-        }
+        .time-display span:first-child { color: #fff; }
 
-        /* Play/Pause Center Animation */
+        /* Quality Dropdown */
+        .quality-container { position: relative; display: flex; align-items: center; justify-content: center;}
+        .quality-menu {
+            position: absolute;
+            bottom: 40px; right: -20px;
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            display: none; flex-direction: column;
+            overflow: hidden; min-width: 100px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .quality-menu.show { display: flex; }
+        .quality-menu div {
+            padding: 10px 16px; font-size: 13px; cursor: pointer; color: #ccc;
+            transition: background 0.2s;
+        }
+        .quality-menu div:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .quality-menu div.active { color: var(--primary); font-weight: bold; background: rgba(0, 238, 255, 0.1); }
+
         .overlay-animation {
             position: absolute;
             top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
             background: rgba(0,0,0,0.5);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             border-radius: 50%;
             width: 72px; height: 72px;
             display: flex; justify-content: center; align-items: center;
             opacity: 0; pointer-events: none; z-index: 15;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
-        .overlay-animation.animate { 
-            animation: pop 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; 
-        }
-
+        .overlay-animation.animate { animation: pop 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         @keyframes pop {
             0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
@@ -331,11 +334,8 @@
 
         .overlay-animation svg { fill: #fff; width: 36px; height: 36px; }
 
-        /* Double Click Seek Rings */
         .seek-animation {
-            position: absolute; 
-            top: 0; bottom: 0; 
-            width: 30%;
+            position: absolute; top: 0; bottom: 0; width: 30%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             background: radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%);
             opacity: 0; pointer-events: none; z-index: 15;
@@ -344,117 +344,59 @@
         .seek-left { left: 0; border-top-right-radius: 50%; border-bottom-right-radius: 50%; }
         .seek-right { right: 0; border-top-left-radius: 50%; border-bottom-left-radius: 50%; }
 
-        .seek-animation.animate { 
-            animation: fadeRipple 0.5s ease-out forwards; 
-        }
-
+        .seek-animation.animate { animation: fadeRipple 0.5s ease-out forwards; }
         @keyframes fadeRipple {
             0% { opacity: 0; transform: scale(0.95); }
             30% { opacity: 1; transform: scale(1); }
             100% { opacity: 0; transform: scale(1.05); }
         }
+        .seek-icon-svg { fill: #fff; width: 40px; height: 40px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
+        .seek-text { font-size: 18px; font-weight: 700; margin-top: 12px; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
 
-        .seek-icon-svg {
-            fill: #fff;
-            width: 40px;
-            height: 40px;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-        }
+        .video-info { margin-top: 36px; padding: 0 12px; animation: slideUp 0.6s ease-out; margin-bottom: 60px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .video-info h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; color: #fff; letter-spacing: -0.5px; }
+        .video-info p { font-size: 17px; color: var(--text-muted); line-height: 1.6; max-width: 800px; }
 
-        .seek-text { 
-            font-size: 18px; 
-            font-weight: 700; 
-            margin-top: 12px; 
-            text-shadow: 0 2px 8px rgba(0,0,0,0.8); 
-        }
-
-        /* Info Section */
-        .video-info {
-            margin-top: 36px;
-            padding: 0 12px;
-            animation: slideUp 0.6s ease-out;
-            margin-bottom: 60px;
-        }
-        
-        @keyframes slideUp { 
-            from { opacity: 0; transform: translateY(20px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-
-        .video-info h2 {
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: 12px;
-            color: #fff;
-            letter-spacing: -0.5px;
-        }
-
-        .video-info p {
-            font-size: 17px;
-            color: var(--text-muted);
-            line-height: 1.6;
-            max-width: 800px;
-        }
-
-        /* Mobile Responsive */
         @media (max-width: 768px) {
             header { padding: 16px 24px; }
             main { padding: 0; margin-top: 0; }
-            .video-container { 
-                border-radius: 0; 
-                box-shadow: none; 
-                border: none; 
-                border-bottom: 1px solid rgba(255,255,255,0.05);
-            }
+            .video-container { border-radius: 0; box-shadow: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
             .volume-container { display: none; }
             .controls { padding: 0 20px 20px; }
             .video-info { padding: 24px; margin-top: 0; }
             .video-info h2 { font-size: 26px; }
             .buttons-row { gap: 16px; }
-            .left-controls { gap: 20px; }
-            
-            /* Give controls overlay slightly thicker bg on mobile for better contrast */
-            .controls-overlay {
-                background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 40%, transparent 70%);
-            }
+            .controls-overlay { background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 40%, transparent 70%); }
         }
     </style>
 </head>
 <body oncontextmenu="return false;">
     
     <header>
-        <h1>StreamX</h1>
+        <span class="animated-title">Dhurandhar - The Revenge</span>
     </header>
 
     <main>
         <div class="video-container active" id="videoContainer">
-            <!-- 
-               100% protection is not possible on frontend.
-               To prevent direct downloads/views we:
-               - Use playsinline, no controls, nodownload, noplaybackrate
-               - Disable right click, long press, drag
-               - Intercept common devtools hotkeys
-            -->
+            <!-- Autoplay without mute is often blocked by browser until interacted, but muted is explicitly removed -->
             <video id="videoPlayer" 
                    playsinline 
-                   muted 
                    autoplay 
                    preload="auto" 
                    disablePictureInPicture 
-                   controlsList="nodownload noplaybackrate">
+                   controlsList="nodownload noplaybackrate"
+                   data-quality="1080">
             </video>
             
-            <!-- Spinner -->
             <div class="spinner-wrapper" id="spinner">
                 <div class="spinner"></div>
             </div>
 
-            <!-- Generic Overlay Icon (Play/Pause) -->
             <div class="overlay-animation" id="overlayAnim">
                 <svg viewBox="0 0 24 24" id="overlayIcon"></svg>
             </div>
 
-            <!-- Double Click Seek Overlays -->
             <div class="seek-animation seek-left" id="seekLeft">
                 <svg viewBox="0 0 24 24" class="seek-icon-svg">
                     <path d="M12.5 3C17.15 3 21 6.85 21 11.5S17.15 20 12.5 20 4 16.15 4 11.5H1.5L5 8l3.5 3.5H6c0 3.59 2.91 6.5 6.5 6.5s6.5-2.91 6.5-6.5-2.91-6.5-6.5-6.5V3zm-1.8 10.9h1.7V8.5h-1.2l-1.6 1.1.5 1.1 1.1-.8v4.1h-.5zm3.8-1.5c0 1.1-.9 1.7-1.9 1.7s-1.9-.6-1.9-1.7V10c0-1.1.9-1.7 1.9-1.7s1.9.6 1.9 1.7v2.4zm-2.4-.1c0 .4.2.7.6.7s.6-.3.6-.7V10c0-.4-.2-.7-.6-.7s-.6.3-.6.7v2.3z"/>
@@ -469,7 +411,6 @@
                 <div class="seek-text">+10s</div>
             </div>
 
-            <!-- Bottom Controls -->
             <div class="controls-overlay">
                 <div class="controls" id="controls">
                     <div class="progress-wrapper" id="progressWrapper">
@@ -479,15 +420,26 @@
                     
                     <div class="buttons-row">
                         <div class="left-controls">
+                            <!-- Play/Pause -->
                             <button class="play-btn" id="playBtn" title="Play/Pause">
                                 <svg viewBox="0 0 24 24" id="playBtnIcon"></svg>
+                            </button>
+                            
+                            <!-- Skip Back 10s -->
+                            <button class="skip-btn" id="rewindBtnControls" title="Rewind 10s">
+                                <svg viewBox="0 0 24 24"><path d="M12.5 3C17.15 3 21 6.85 21 11.5S17.15 20 12.5 20 4 16.15 4 11.5H1.5L5 8l3.5 3.5H6c0 3.59 2.91 6.5 6.5 6.5s6.5-2.91 6.5-6.5-2.91-6.5-6.5-6.5V3z"/></svg>
+                            </button>
+
+                            <!-- Skip Forward 10s -->
+                            <button class="skip-btn" id="forwardBtnControls" title="Forward 10s">
+                                <svg viewBox="0 0 24 24"><path d="M11.5 3C6.85 3 3 6.85 3 11.5S6.85 20 11.5 20s8.5-3.85 8.5-8.5h2.5L19 8l-3.5 3.5h2.5c0 3.59-2.91 6.5-6.5 6.5S5 16.09 5 11.5 7.91 5 11.5 5V3z"/></svg>
                             </button>
                             
                             <div class="volume-container">
                                 <button id="muteBtn" title="Mute/Unmute">
                                     <svg viewBox="0 0 24 24" class="icon" id="muteIcon"></svg>
                                 </button>
-                                <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="0">
+                                <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="1">
                             </div>
                             
                             <div class="time-display">
@@ -496,6 +448,16 @@
                         </div>
                         
                         <div class="right-controls">
+                            <div class="quality-container">
+                                <button id="qualityBtn" title="Quality Settings">
+                                    <svg viewBox="0 0 24 24" class="icon"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+                                </button>
+                                <div class="quality-menu" id="qualityMenu">
+                                    <div data-q="1080" class="active">1080p HD</div>
+                                    <div data-q="720">720p</div>
+                                    <div data-q="480">480p</div>
+                                </div>
+                            </div>
                             <button id="fullscreenBtn" title="Fullscreen">
                                 <svg viewBox="0 0 24 24" class="icon" id="fullscreenIcon"></svg>
                             </button>
@@ -506,29 +468,20 @@
         </div>
 
         <div class="video-info">
-            <h2>The Future of Rendering</h2>
-            <p>Experience an immersive showcase of ultra high-definition dynamic rendering combined with bleeding-edge visual effects. Delivered securely with ultra-low latency playback powered by Cloudflare R2 infrastructure.</p>
+            <h2>Dhurandhar - The Revenge</h2>
+            <p>An exclusive showcase of ultra high-definition rendering. Watch as Dhurandhar seeks his revenge in spectacular animation. Optimized for fast streaming.</p>
         </div>
     </main>
 
     <script>
-        // --- BASIC PROTECTION --- //
-        // As commented above, 100% protection is not possible on frontend.
-        // We do basic heuristics to delay non-technical users.
-        
-        // Block Dragging
         document.addEventListener('dragstart', e => e.preventDefault());
-        
-        // Block Common DevTools Hotkeys
         document.addEventListener('keydown', e => {
             if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) e.preventDefault();
             if (e.ctrlKey && e.shiftKey && ['i','I','j','J','c','C'].includes(e.key)) e.preventDefault();
             if (e.key === 'F12') e.preventDefault();
         });
 
-        // --- DOM Elements --- //
         const video = document.getElementById('videoPlayer');
-        // Setting video src here hides it slightly from basic scraping
         video.src = 'https://pub-82f7b19554224f9eae95dca653d9228e.r2.dev/output.mp4';
 
         const container = document.getElementById('videoContainer');
@@ -550,8 +503,13 @@
         const overlayIcon = document.getElementById('overlayIcon');
         const seekLeft = document.getElementById('seekLeft');
         const seekRight = document.getElementById('seekRight');
+        const rewindBtnControls = document.getElementById('rewindBtnControls');
+        const forwardBtnControls = document.getElementById('forwardBtnControls');
 
-        // --- SVGs Definitions --- //
+        const qualityBtn = document.getElementById('qualityBtn');
+        const qualityMenu = document.getElementById('qualityMenu');
+        const qualityOptions = qualityMenu.querySelectorAll('div');
+
         const ICONS = {
             play: 'M8 5v14l11-7z',
             pause: 'M6 19h4V5H6v14zm8-14v14h4V5h-4z',
@@ -561,12 +519,16 @@
             fullOff: 'M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z'
         };
 
-        // Initialize state icons
-        playBtnIcon.innerHTML = `<path d="${ICONS.pause}"/>`; // because of autoplay
-        muteIcon.innerHTML = `<path d="${ICONS.volOff}"/>`;
+        // Unmuted default, so set volume icons to ON
+        playBtnIcon.innerHTML = `<path d="${ICONS.play}"/>`; // Starts paused for unmuted by default unless allowed by browser
+        muteIcon.innerHTML = `<path d="${ICONS.volOn}"/>`;
         fullscreenIcon.innerHTML = `<path d="${ICONS.fullOn}"/>`;
+        video.volume = 1;
 
-        // --- Helper functions --- //
+        // Ensure button updates when autoplay block is resolved
+        video.addEventListener('play', () => playBtnIcon.innerHTML = `<path d="${ICONS.pause}"/>`);
+        video.addEventListener('pause', () => playBtnIcon.innerHTML = `<path d="${ICONS.play}"/>`);
+
         function formatTime(sec) {
             if (isNaN(sec)) return '00:00';
             const m = Math.floor(sec / 60);
@@ -577,19 +539,16 @@
         function triggerOverlayAnimation(iconData) {
             overlayIcon.innerHTML = `<path d="${iconData}"/>`;
             overlayAnim.classList.remove('animate');
-            void overlayAnim.offsetWidth; // trigger reflow
+            void overlayAnim.offsetWidth; 
             overlayAnim.classList.add('animate');
         }
 
-        // --- HUD Auto Hide --- //
         let controlsTimeout;
         function resetControlsTimeout() {
             container.classList.add('active');
             clearTimeout(controlsTimeout);
             controlsTimeout = setTimeout(() => {
-                if (!video.paused) {
-                    container.classList.remove('active');
-                }
+                if (!video.paused) container.classList.remove('active');
             }, 3000);
         }
 
@@ -599,66 +558,63 @@
             if (!video.paused) container.classList.remove('active');
         });
 
-        // --- Video Playback Logic --- //
         function togglePlay() {
             if (video.paused) {
                 video.play();
-                playBtnIcon.innerHTML = `<path d="${ICONS.pause}"/>`;
                 triggerOverlayAnimation(ICONS.play);
-                resetControlsTimeout();
             } else {
                 video.pause();
-                playBtnIcon.innerHTML = `<path d="${ICONS.play}"/>`;
                 container.classList.add('active');
                 triggerOverlayAnimation(ICONS.pause);
             }
+            resetControlsTimeout();
         }
 
         playBtn.addEventListener('click', togglePlay);
 
-        // --- Complex Hit Detection (Double Click Seek vs Single Click Play/Pause) --- //
+        function triggerRewind() {
+            video.currentTime = Math.max(0, video.currentTime - 10);
+            seekLeft.classList.remove('animate');
+            void seekLeft.offsetWidth;
+            seekLeft.classList.add('animate');
+            resetControlsTimeout();
+        }
+
+        function triggerForward() {
+            video.currentTime = Math.min(video.duration, video.currentTime + 10);
+            seekRight.classList.remove('animate');
+            void seekRight.offsetWidth;
+            seekRight.classList.add('animate');
+            resetControlsTimeout();
+        }
+
+        rewindBtnControls.addEventListener('click', triggerRewind);
+        forwardBtnControls.addEventListener('click', triggerForward);
+
         let lastClickTime = 0;
         let singleClickTimeout;
-        
         container.addEventListener('click', (e) => {
-            // Ignore clicks directly on the controls bar
             if (e.target.closest('.controls-overlay')) return;
 
             const now = Date.now();
             const timeDiff = now - lastClickTime;
             lastClickTime = now;
 
-            // Threshold for double tap / click is typically ~300ms
             if (timeDiff < 280) {
-                // Double click registered! Cancel single click behavior
                 clearTimeout(singleClickTimeout);
-                
                 const rect = container.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                
-                if (clickX < rect.width / 2) {
-                    // Rewind
-                    video.currentTime = Math.max(0, video.currentTime - 10);
-                    seekLeft.classList.remove('animate');
-                    void seekLeft.offsetWidth;
-                    seekLeft.classList.add('animate');
+                if (e.clientX - rect.left < rect.width / 2) {
+                    triggerRewind();
                 } else {
-                    // Forward
-                    video.currentTime = Math.min(video.duration, video.currentTime + 10);
-                    seekRight.classList.remove('animate');
-                    void seekRight.offsetWidth;
-                    seekRight.classList.add('animate');
+                    triggerForward();
                 }
-                resetControlsTimeout();
             } else {
-                // Wait briefly to see if it becomes a double click before executing single click
                 singleClickTimeout = setTimeout(() => {
                     togglePlay();
                 }, 280);
             }
         });
 
-        // --- Progress / Scrubbing --- //
         video.addEventListener('timeupdate', () => {
             currentTimeEl.textContent = formatTime(video.currentTime);
             const progressPct = (video.currentTime / video.duration) * 100;
@@ -672,48 +628,28 @@
         video.addEventListener('progress', () => {
             if (video.buffered.length > 0) {
                 const bufferedEnd = video.buffered.end(video.buffered.length - 1);
-                const bufferPct = (bufferedEnd / video.duration) * 100;
-                bufferBar.style.width = `${bufferPct}%`;
+                bufferBar.style.width = `${(bufferedEnd / video.duration) * 100}%`;
             }
         });
 
-        // Scrubbing Interactions
         let isScrubbing = false;
-        
         function updateScrub(e) {
             const rect = progressWrapper.getBoundingClientRect();
-            // Fallback for touch events
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             let ratio = (clientX - rect.left) / rect.width;
-            ratio = Math.max(0, Math.min(1, ratio)); // Clamp between 0-1
+            ratio = Math.max(0, Math.min(1, ratio)); 
             video.currentTime = ratio * video.duration;
         }
 
-        progressWrapper.addEventListener('mousedown', (e) => {
-            isScrubbing = true;
-            updateScrub(e);
-        });
-        
-        progressWrapper.addEventListener('touchstart', (e) => {
-            isScrubbing = true;
-            updateScrub(e);
-        }, {passive: false});
+        progressWrapper.addEventListener('mousedown', (e) => { isScrubbing = true; updateScrub(e); });
+        progressWrapper.addEventListener('touchstart', (e) => { isScrubbing = true; updateScrub(e); }, {passive: false});
 
-        document.addEventListener('mousemove', (e) => {
-            if (isScrubbing) updateScrub(e);
-        });
-        
-        document.addEventListener('touchmove', (e) => {
-            if (isScrubbing) {
-                e.preventDefault(); // Stop page scrolling
-                updateScrub(e);
-            }
-        }, {passive: false});
+        document.addEventListener('mousemove', (e) => { if (isScrubbing) updateScrub(e); });
+        document.addEventListener('touchmove', (e) => { if (isScrubbing) { e.preventDefault(); updateScrub(e); } }, {passive: false});
 
         document.addEventListener('mouseup', () => isScrubbing = false);
         document.addEventListener('touchend', () => isScrubbing = false);
 
-        // --- Volume Controls --- //
         function updateVolumeUI() {
             if (video.muted || video.volume === 0) {
                 muteIcon.innerHTML = `<path d="${ICONS.volOff}"/>`;
@@ -729,7 +665,7 @@
                 video.muted = false;
                 video.volume = volumeSlider.dataset.lastVol > 0 ? volumeSlider.dataset.lastVol : 1;
             } else {
-                volumeSlider.dataset.lastVol = video.volume; // Save previous volume
+                volumeSlider.dataset.lastVol = video.volume;
                 video.muted = true;
             }
             updateVolumeUI();
@@ -742,90 +678,63 @@
             updateVolumeUI();
         });
 
-        // --- Fullscreen --- //
         function toggleFullscreen() {
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                if (container.requestFullscreen) {
-                    container.requestFullscreen();
-                } else if (container.webkitRequestFullscreen) {
-                    container.webkitRequestFullscreen();
-                }
+                if (container.requestFullscreen) container.requestFullscreen();
+                else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
             }
         }
 
         fullscreenBtn.addEventListener('click', toggleFullscreen);
-
         function updateFullscreenIcon() {
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                fullscreenIcon.innerHTML = `<path d="${ICONS.fullOff}"/>`;
-            } else {
-                fullscreenIcon.innerHTML = `<path d="${ICONS.fullOn}"/>`;
-            }
+            if (document.fullscreenElement || document.webkitFullscreenElement) fullscreenIcon.innerHTML = `<path d="${ICONS.fullOff}"/>`;
+            else fullscreenIcon.innerHTML = `<path d="${ICONS.fullOn}"/>`;
         }
-
         document.addEventListener('fullscreenchange', updateFullscreenIcon);
         document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
 
-        // --- Keyboard Shortcuts --- //
+        // Quality Menu toggle
+        qualityBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            qualityMenu.classList.toggle('show');
+        });
+        
+        document.addEventListener('click', () => {
+            qualityMenu.classList.remove('show');
+        });
+
+        qualityOptions.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                qualityOptions.forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                video.setAttribute('data-quality', opt.dataset.q);
+            });
+        });
+
         document.addEventListener('keydown', (e) => {
             const tag = document.activeElement.tagName.toLowerCase();
-            if (tag === 'input' || tag === 'textarea') return; // Ignore if typing
+            if (tag === 'input' || tag === 'textarea') return;
 
             switch(e.code) {
-                case 'Space':
-                    e.preventDefault();
-                    togglePlay();
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    video.currentTime = Math.min(video.duration, video.currentTime + 10);
-                    triggerOverlayAnimation(ICONS.play);
-                    resetControlsTimeout();
-                    break;
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    video.currentTime = Math.max(0, video.currentTime - 10);
-                    triggerOverlayAnimation(ICONS.play);
-                    resetControlsTimeout();
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    video.muted = false;
-                    video.volume = Math.min(1, video.volume + 0.1);
-                    updateVolumeUI();
-                    resetControlsTimeout();
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    video.volume = Math.max(0, video.volume - 0.1);
-                    if(video.volume === 0) video.muted = true;
-                    updateVolumeUI();
-                    resetControlsTimeout();
-                    break;
-                case 'KeyF':
-                    toggleFullscreen();
-                    break;
-                case 'KeyM':
-                    muteBtn.click();
-                    break;
+                case 'Space': e.preventDefault(); togglePlay(); break;
+                case 'ArrowRight': e.preventDefault(); triggerForward(); break;
+                case 'ArrowLeft': e.preventDefault(); triggerRewind(); break;
+                case 'ArrowUp': e.preventDefault(); video.muted = false; video.volume = Math.min(1, video.volume + 0.1); updateVolumeUI(); resetControlsTimeout(); break;
+                case 'ArrowDown': e.preventDefault(); video.volume = Math.max(0, video.volume - 0.1); if(video.volume === 0) video.muted = true; updateVolumeUI(); resetControlsTimeout(); break;
+                case 'KeyF': toggleFullscreen(); break;
+                case 'KeyM': muteBtn.click(); break;
             }
         });
 
-        // --- Spinner Logic --- //
         video.addEventListener('waiting', () => spinner.classList.remove('hidden'));
         video.addEventListener('canplay', () => spinner.classList.add('hidden'));
         video.addEventListener('playing', () => spinner.classList.add('hidden'));
 
-        // Handle end of video
         video.addEventListener('ended', () => {
-            playBtnIcon.innerHTML = `<path d="${ICONS.play}"/>`;
-            container.classList.add('active'); // keep controls visible at the end
+            container.classList.add('active');
         });
 
     </script>
