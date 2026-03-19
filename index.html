@@ -41,14 +41,6 @@
             transition: filter 0.3s ease;
         }
 
-        /* Full Size in Fullscreen */
-        .video-container:fullscreen video {
-            object-fit: contain; /* Keeps aspect ratio but fills the black space */
-        }
-        
-        /* Apply object-fit: cover only if we want to force fill (might crop) */
-        /* For now, contain is safer for movies, but I'll make sure the container is black edge-to-edge. */
-
         video[data-quality="480"] { filter: blur(2px) contrast(0.8); }
         video[data-quality="720"] { filter: blur(0.7px); }
 
@@ -59,7 +51,6 @@
             background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.5) 100%);
             display: flex; flex-direction: column; justify-content: space-between;
         }
-
         .video-container.active .hud { opacity: 1; }
 
         .progress-container {
@@ -96,8 +87,6 @@
         }
         button:hover { transform: scale(1.15); opacity: 1; }
         button:active { transform: scale(0.95); }
-        
-        /* Updated SVG icons to be bolder and cleaner */
         svg { width: 32px; height: 32px; fill: currentColor; }
 
         .time-display { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; color: #ccc; }
@@ -114,8 +103,12 @@
         .quality-menu div:hover { background: rgba(255,255,255,0.1); color: #fff; }
         .quality-menu div.active { color: var(--primary); font-weight: bold; background: rgba(0, 238, 255, 0.05); }
 
-        .tap-regions { position: absolute; inset: 0; display: flex; z-index: 15; pointer-events: auto; }
-        .tap-left, .tap-right { width: 50%; height: 100%; }
+        /* INTERACTION REGIONS: Improved Play/Pause Center + Side Skips */
+        .tap-regions { 
+            position: absolute; inset: 0; display: flex; z-index: 15; pointer-events: auto;
+        }
+        .tap-side { width: 30%; height: 100%; cursor: pointer; }
+        .tap-center { flex: 1; height: 100%; cursor: pointer; }
 
         .center-anim {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -153,25 +146,21 @@
 
         .hidden { display: none !important; }
 
-        /* Full Width and Landscape Orientation for Fullscreen Mode */
         :fullscreen video, :-webkit-full-screen video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: contain;
+            width: 100% !important; height: 100% !important; object-fit: contain;
         }
-
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div class="video-container active" id="container">
-        <!-- Main Video -->
         <video id="player" playsinline autoplay preload="auto" disablePictureInPicture data-quality="1080"></video>
 
-        <!-- Interactions -->
+        <!-- Tap-to-Control Regions -->
         <div class="tap-regions">
-            <div class="tap-left" id="tapLeft"></div>
-            <div class="tap-right" id="tapRight"></div>
+            <div class="tap-side" id="tapLeftBox"></div>
+            <div class="tap-center" id="tapCenterBox"></div> <!-- NEW CENTER TAP ZONE -->
+            <div class="tap-side" id="tapRightBox"></div>
         </div>
 
         <div class="center-anim" id="centerAnim"><svg viewBox="0 0 24 24" id="centerIcon"></svg></div>
@@ -186,9 +175,8 @@
             <div class="skip-text">10s</div>
         </div>
 
-        <!-- Hud Overlay -->
         <div class="hud">
-            <div></div> <!-- Top padding -->
+            <div></div>
             <div class="bottom-hud">
                 <div class="progress-container" id="scrubber">
                     <div class="progress-rail">
@@ -214,13 +202,7 @@
                                 <div data-q="480">480p</div>
                             </div>
                         </div>
-                        
-                        <!-- REPLACED ICON WITH SQUARE VERSION FROM USER IMAGE -->
-                        <button id="fullBtn">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M5 15H3V21H9V19H5V15ZM3 9H5V5H9V3H3V9ZM19 19H15V21H21V15H19V19ZM15 3V5H19V9H21V3H15Z" />
-                            </svg>
-                        </button>
+                        <button id="fullBtn"><svg viewBox="0 0 24 24"><path d="M5 15H3V21H9V19H5V15ZM3 9H5V5H9V3H3V9ZM19 19H15V21H21V15H19V19ZM15 3V5H19V9H21V3H15Z" /></svg></button>
                     </div>
                 </div>
             </div>
@@ -284,16 +266,25 @@
         window.addEventListener('touchend', () => isScrubbing = false);
         let isScrubbing = false;
 
+        // UPDATED CLICK HANDLING: Skip on sides, Play/Pause in center
         let tapCountL = 0, tapCountR = 0, tapTimerL, tapTimerR;
-        document.getElementById('tapLeft').addEventListener('click', () => {
+        
+        document.getElementById('tapLeftBox').addEventListener('click', () => {
             tapCountL++; clearTimeout(tapTimerL);
             if (tapCountL === 2) { skip(-10, 'hintLeft'); tapCountL = 0; }
             else { tapTimerL = setTimeout(() => { if (tapCountL === 1) togglePlay(); tapCountL = 0; }, 280); }
         });
-        document.getElementById('tapRight').addEventListener('click', () => {
+
+        document.getElementById('tapRightBox').addEventListener('click', () => {
             tapCountR++; clearTimeout(tapTimerR);
             if (tapCountR === 2) { skip(10, 'hintRight'); tapCountR = 0; }
             else { tapTimerR = setTimeout(() => { if (tapCountR === 1) togglePlay(); tapCountR = 0; }, 280); }
+        });
+
+        document.getElementById('tapCenterBox').addEventListener('click', () => {
+            // Instant play/pause in the middle
+            togglePlay();
+            resetHUD();
         });
 
         function skip(sec, hintId) {
@@ -332,33 +323,16 @@
             });
         });
 
-        // REFINED FULLSCREEN + ORIENTATION LOCK
         document.getElementById('fullBtn').addEventListener('click', async () => {
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                // Try entering fullscreen
                 try {
                     const method = c.requestFullscreen || c.webkitRequestFullscreen || c.msRequestFullscreen;
                     if (method) await method.call(c);
-                    
-                    // Attempt to Lock Landscape for Phones
-                    if (screen.orientation && screen.orientation.lock) {
-                        // Some browsers require a small delay or user interaction context which we have here
-                        await screen.orientation.lock('landscape').catch(e => console.log("Orientation lock failed: ", e));
-                    }
-                } catch (err) {
-                    console.error("Fullscreen failed:", err);
-                }
+                    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
+                } catch (err) {}
             } else {
                 const exitMethod = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
                 if (exitMethod) await exitMethod.call(document);
-                if (screen.orientation && screen.orientation.unlock) {
-                    screen.orientation.unlock();
-                }
-            }
-        });
-
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
                 if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
             }
         });
